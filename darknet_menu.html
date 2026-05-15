@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MonoMenu // ACCESS GRANTED</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #ff2020;
+    --dim-red: #7a0000;
+    --green: #00ff41;
+    --dim-green: #003b10;
+    --bg: #050505;
+    --panel: #0a0a0a;
+    --border: #1a1a1a;
+    --text: #c0c0c0;
+    --white: #e8e8e8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  ::selection { background: var(--red); color: #000; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── Scanlines overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── Noise grain ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.4;
+  }
+
+  /* ── Header bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 28px;
+    border-bottom: 1px solid #1c1c1c;
+    background: #070707;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  .dot-r { background: var(--red); animation-delay: 0s; }
+  .dot-g { background: #333; animation-delay: 0.4s; }
+  .dot-b { background: #222; animation-delay: 0.8s; }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .topbar-title {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--red);
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px rgba(255,32,32,0.5);
+  }
+  .topbar-right {
+    font-size: 11px;
+    color: #333;
+    letter-spacing: 1px;
+  }
+  .blink { animation: blink 1.2s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ── Main layout ── */
+  .page {
+    min-height: calc(100vh - 42px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px 80px;
+    position: relative;
+  }
+
+  /* ── Background grid ── */
+  .page::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,32,32,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,32,32,0.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+  }
+
+  /* ── Warning banner ── */
+  .warning-banner {
+    font-size: 11px;
+    color: var(--dim-red);
+    border: 1px solid #1a0000;
+    padding: 6px 18px;
+    letter-spacing: 2px;
+    margin-bottom: 50px;
+    text-transform: uppercase;
+    animation: flicker 6s infinite;
+  }
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:0.4} 94%{opacity:1} 96%{opacity:0.6} 97%{opacity:1}
+  }
+
+  /* ── Logo / title ── */
+  .logo {
+    font-family: 'VT323', monospace;
+    font-size: clamp(48px, 10vw, 96px);
+    color: var(--white);
+    letter-spacing: 12px;
+    text-align: center;
+    line-height: 1;
+    position: relative;
+    text-shadow:
+      0 0 20px rgba(255,255,255,0.15),
+      2px 2px 0 #1a1a1a;
+    animation: glitch-idle 8s infinite;
+  }
+  .logo span { color: var(--red); }
+
+  @keyframes glitch-idle {
+    0%,89%,100% { text-shadow: 0 0 20px rgba(255,255,255,0.15), 2px 2px 0 #1a1a1a; transform: none; }
+    90% { text-shadow: -3px 0 var(--red), 3px 0 #00ccff; transform: skewX(-1deg); }
+    91% { text-shadow: 3px 0 var(--red), -3px 0 #00ccff; transform: skewX(1deg); }
+    92% { text-shadow: 0 0 20px rgba(255,255,255,0.15), 2px 2px 0 #1a1a1a; transform: none; }
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: #444;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-top: 10px;
+    margin-bottom: 60px;
+    text-align: center;
+  }
+
+  /* ── Central button ── */
+  .get-btn {
+    position: relative;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 50px;
+  }
+
+  .get-btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 18px 52px;
+    border: 1px solid #2a2a2a;
+    background: #0d0d0d;
+    color: var(--white);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .get-btn-inner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,32,32,0.06), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+  }
+  .get-btn:hover .get-btn-inner::before { transform: translateX(100%); }
+
+  .get-btn:hover .get-btn-inner {
+    border-color: var(--red);
+    color: var(--red);
+    box-shadow: 0 0 20px rgba(255,32,32,0.15), inset 0 0 20px rgba(255,32,32,0.04);
+    text-shadow: 0 0 10px rgba(255,32,32,0.6);
+  }
+
+  .get-btn:active .get-btn-inner {
+    transform: scale(0.97);
+  }
+
+  .btn-icon {
+    font-size: 18px;
+    transition: transform 0.3s;
+  }
+  .get-btn:hover .btn-icon { transform: rotate(15deg); }
+
+  /* Угловые декораторы кнопки */
+  .btn-corner {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-color: #333;
+    border-style: solid;
+    transition: border-color 0.2s;
+  }
+  .btn-corner.tl { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .btn-corner.tr { top: -1px; right: -1px; border-width: 1px 1px 0 0; }
+  .btn-corner.bl { bottom: -1px; left: -1px; border-width: 0 0 1px 1px; }
+  .btn-corner.br { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+  .get-btn:hover .btn-corner { border-color: var(--red); }
+
+  /* ── Code panel (hidden initially) ── */
+  .code-panel {
+    width: 100%;
+    max-width: 800px;
+    background: #070707;
+    border: 1px solid #1e1e1e;
+    position: relative;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+  }
+  .code-panel.visible {
+    max-height: 700px;
+    opacity: 1;
+  }
+
+  /* Верхняя панель code-panel */
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #0c0c0c;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .code-header-left {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .code-badge {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--red);
+    border: 1px solid #330000;
+    padding: 2px 8px;
+    text-transform: uppercase;
+  }
+  .code-filename {
+    font-size: 11px;
+    color: #3a3a3a;
+    letter-spacing: 1px;
+  }
+  .copy-btn {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    color: #888;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    padding: 5px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .copy-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 10px rgba(0,255,65,0.1);
+  }
+  .copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* Код */
+  .code-scroll {
+    max-height: 560px;
+    overflow-y: auto;
+    padding: 20px 24px;
+    scrollbar-width: thin;
+    scrollbar-color: #1e1e1e #070707;
+  }
+  .code-scroll::-webkit-scrollbar { width: 4px; }
+  .code-scroll::-webkit-scrollbar-track { background: #070707; }
+  .code-scroll::-webkit-scrollbar-thumb { background: #1e1e1e; }
+
+  pre {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    line-height: 1.9;
+    color: #888;
+    white-space: pre;
+    tab-size: 4;
+  }
+
+  /* Подсветка */
+  .kw  { color: #cc3333; }
+  .fn  { color: #aaaaaa; }
+  .str { color: #555; }
+  .cmt { color: #2d2d2d; font-style: italic; }
+  .nm  { color: #777; }
+  .br  { color: #444; }
+
+  /* ── Footer ── */
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 8px 20px;
+    background: #070707;
+    border-top: 1px solid #111;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #252525;
+    letter-spacing: 1px;
+    z-index: 100;
+  }
+  .footer-status { color: #1a1a1a; }
+  .footer-status.active { color: var(--dim-red); animation: flicker 4s infinite; }
+
+  /* ── Декоративные символы ── */
+  .deco-line {
+    font-size: 11px;
+    color: #1a1a1a;
+    letter-spacing: 2px;
+    margin: 16px 0;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-dot dot-r"></div>
+    <div class="topbar-dot dot-g"></div>
+    <div class="topbar-dot dot-b"></div>
+    <span class="topbar-title">SYS://MONO_TERMINAL</span>
+  </div>
+  <div class="topbar-right">IP: 127.0.0.1 &nbsp;|&nbsp; <span class="blink">●</span> CONNECTED</div>
+</div>
+
+<!-- Main page -->
+<div class="page">
+
+  <div class="warning-banner">⚠ &nbsp; unauthorized access will be logged &nbsp; ⚠</div>
+
+  <div class="logo">MONO<span>.</span>MENU</div>
+  <div class="subtitle">roblox // localscript // v2.0 // monochrome</div>
+
+  <div class="deco-line">────────────── ◈ ──────────────</div>
+
+  <button class="get-btn" id="getBtn" onclick="revealScript()">
+    <div class="btn-corner tl"></div>
+    <div class="btn-corner tr"></div>
+    <div class="btn-corner bl"></div>
+    <div class="btn-corner br"></div>
+    <div class="get-btn-inner">
+      <span class="btn-icon">⬡</span>
+      GET SCRIPT
+      <span class="btn-icon">⬡</span>
+    </div>
+  </button>
+
+  <!-- Code panel -->
+  <div class="code-panel" id="codePanel">
+    <div class="code-header">
+      <div class="code-header-left">
+        <span class="code-badge">LUA</span>
+        <span class="code-filename">AnimatedMenu.lua &nbsp;// LocalScript</span>
+      </div>
+      <button class="copy-btn" id="copyBtn" onclick="copyScript()">
+        <span id="copyIcon">⎘</span>
+        <span id="copyText">COPY</span>
+      </button>
+    </div>
+    <div class="code-scroll">
+      <pre id="codeBlock"></pre>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>SYS://MONO_TERMINAL v0.2 // BUILD 2025</span>
+  <span class="footer-status" id="footerStatus">STATUS: IDLE</span>
+  <span>NODE: [REDACTED]</span>
+</div>
+
+<script>
+const SCRIPT_CODE = `-- ╔══════════════════════════════════════════════╗
+-- ║       ELEGANT MONOCHROME MENU SYSTEM         ║
+-- ║         Roblox Studio / LocalScript          ║
+-- ╚══════════════════════════════════════════════╝
+
+local Players        = game:GetService("Players")
+local TweenService   = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService     = game:GetService("RunService")
+
+local Player         = Players.LocalPlayer
+local PlayerGui      = Player:WaitForChild("PlayerGui")
+
+-- НАСТРОЙКИ МЕНЮ
+
+local CONFIG = {
+    TOGGLE_KEY      = Enum.KeyCode.LeftAlt,
+    MENU_WIDTH      = 300,
+    MENU_HEIGHT     = 420,
+    ANIM_SPEED      = 0.4,
+    ITEMS = {
+        { Name = "⚡  Скорость",    Action = function() print("Скорость включена") end },
+        { Name = "🌙  Прыжок",      Action = function() print("Прыжок включён")    end },
+        { Name = "🔦  Фонарик",     Action = function() print("Фонарик включён")   end },
+        { Name = "👁  ESP",         Action = function() print("ESP включён")       end },
+        { Name = "💀  Авто-убийца", Action = function() print("Убийца включён")    end },
+        { Name = "🛡  Инвин.",      Action = function() print("Инвин. включена")   end },
+    }
+}
+
+if PlayerGui:FindFirstChild("MonoMenu") then
+    PlayerGui.MonoMenu:Destroy()
+end
+
+local ScreenGui       = Instance.new("ScreenGui")
+ScreenGui.Name        = "MonoMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent      = PlayerGui
+
+local Overlay         = Instance.new("Frame")
+Overlay.Name          = "Overlay"
+Overlay.Size          = UDim2.fromScale(1, 1)
+Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+Overlay.BackgroundTransparency = 1
+Overlay.ZIndex        = 5
+Overlay.Parent        = ScreenGui
+
+local MenuFrame       = Instance.new("Frame")
+MenuFrame.Name        = "MenuFrame"
+MenuFrame.Size        = UDim2.new(0, CONFIG.MENU_WIDTH, 0, CONFIG.MENU_HEIGHT)
+MenuFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MenuFrame.Position    = UDim2.new(0.5, 0, 0.5, 0)
+MenuFrame.BackgroundColor3 = Color3.new(0.04, 0.04, 0.04)
+MenuFrame.ClipsDescendants = true
+MenuFrame.ZIndex      = 6
+MenuFrame.Visible     = false
+MenuFrame.Parent      = ScreenGui
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 16)
+Corner.Parent = MenuFrame
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Color3.new(1, 1, 1)
+Stroke.Thickness = 1
+Stroke.Transparency = 0.75
+Stroke.Parent = MenuFrame
+
+local TopLine = Instance.new("Frame")
+TopLine.Size = UDim2.new(1, 0, 0, 2)
+TopLine.BackgroundColor3 = Color3.new(1, 1, 1)
+TopLine.BackgroundTransparency = 0.4
+TopLine.BorderSizePixel = 0
+TopLine.ZIndex = 7
+TopLine.Parent = MenuFrame
+
+local LineGrad = Instance.new("UIGradient")
+LineGrad.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0,   Color3.new(0, 0, 0)),
+    ColorSequenceKeypoint.new(0.3, Color3.new(1, 1, 1)),
+    ColorSequenceKeypoint.new(0.7, Color3.new(1, 1, 1)),
+    ColorSequenceKeypoint.new(1,   Color3.new(0, 0, 0)),
+}
+LineGrad.Parent = TopLine
+
+local TitleContainer = Instance.new("Frame")
+TitleContainer.Size = UDim2.new(1, 0, 0, 64)
+TitleContainer.BackgroundTransparency = 1
+TitleContainer.ZIndex = 7
+TitleContainer.Parent = MenuFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Text = "M E N U"
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 22
+TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.ZIndex = 8
+TitleLabel.Parent = TitleContainer
+
+local SubLabel = Instance.new("TextLabel")
+SubLabel.Text = "◈  Монохромная панель"
+SubLabel.Font = Enum.Font.Gotham
+SubLabel.TextSize = 11
+SubLabel.TextColor3 = Color3.new(0.7, 0.7, 0.7)
+SubLabel.BackgroundTransparency = 1
+SubLabel.Size = UDim2.new(1, -20, 0, 16)
+SubLabel.Position = UDim2.new(0, 12, 0, 40)
+SubLabel.TextXAlignment = Enum.TextXAlignment.Left
+SubLabel.ZIndex = 8
+SubLabel.Parent = TitleContainer
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -44, 0, 16)
+CloseBtn.BackgroundColor3 = Color3.new(0.12, 0.12, 0.12)
+CloseBtn.Text = "✕"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+CloseBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+CloseBtn.ZIndex = 9
+CloseBtn.AutoButtonColor = false
+CloseBtn.Parent = MenuFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+local ButtonList = Instance.new("ScrollingFrame")
+ButtonList.Size = UDim2.new(1, -24, 1, -100)
+ButtonList.Position = UDim2.new(0, 12, 0, 78)
+ButtonList.BackgroundTransparency = 1
+ButtonList.ScrollBarThickness = 3
+ButtonList.ScrollBarImageColor3 = Color3.new(0.4, 0.4, 0.4)
+ButtonList.CanvasSize = UDim2.new(0, 0, 0, 0)
+ButtonList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ButtonList.ZIndex = 7
+ButtonList.Parent = MenuFrame
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.Padding = UDim.new(0, 8)
+ListLayout.FillDirection = Enum.FillDirection.Vertical
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Parent = ButtonList
+
+local toggleStates = {}
+
+local function createMenuButton(item, index)
+    toggleStates[index] = false
+    local BtnFrame = Instance.new("Frame")
+    BtnFrame.Size = UDim2.new(1, 0, 0, 48)
+    BtnFrame.BackgroundColor3 = Color3.new(0.08, 0.08, 0.08)
+    BtnFrame.LayoutOrder = index
+    BtnFrame.ZIndex = 8
+    BtnFrame.Parent = ButtonList
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 10)
+    BtnCorner.Parent = BtnFrame
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Color = Color3.new(0.25, 0.25, 0.25)
+    BtnStroke.Thickness = 1
+    BtnStroke.Parent = BtnFrame
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Size = UDim2.new(0, 3, 0.6, 0)
+    AccentBar.Position = UDim2.new(0, 0, 0.2, 0)
+    AccentBar.BackgroundColor3 = Color3.new(1, 1, 1)
+    AccentBar.BackgroundTransparency = 1
+    AccentBar.BorderSizePixel = 0
+    AccentBar.ZIndex = 9
+    AccentBar.Parent = BtnFrame
+    local AccentCorner = Instance.new("UICorner")
+    AccentCorner.CornerRadius = UDim.new(1, 0)
+    AccentCorner.Parent = AccentBar
+    local BtnLabel = Instance.new("TextLabel")
+    BtnLabel.Text = item.Name
+    BtnLabel.Font = Enum.Font.Gotham
+    BtnLabel.TextSize = 14
+    BtnLabel.TextColor3 = Color3.new(0.75, 0.75, 0.75)
+    BtnLabel.BackgroundTransparency = 1
+    BtnLabel.Size = UDim2.new(1, -90, 1, 0)
+    BtnLabel.Position = UDim2.new(0, 18, 0, 0)
+    BtnLabel.TextXAlignment = Enum.TextXAlignment.Left
+    BtnLabel.ZIndex = 9
+    BtnLabel.Parent = BtnFrame
+    local ToggleTrack = Instance.new("Frame")
+    ToggleTrack.Size = UDim2.new(0, 44, 0, 24)
+    ToggleTrack.Position = UDim2.new(1, -56, 0.5, -12)
+    ToggleTrack.BackgroundColor3 = Color3.new(0.15, 0.15, 0.15)
+    ToggleTrack.BorderSizePixel = 0
+    ToggleTrack.ZIndex = 9
+    ToggleTrack.Parent = BtnFrame
+    local TrackCorner = Instance.new("UICorner")
+    TrackCorner.CornerRadius = UDim.new(1, 0)
+    TrackCorner.Parent = ToggleTrack
+    local ToggleKnob = Instance.new("Frame")
+    ToggleKnob.Size = UDim2.new(0, 18, 0, 18)
+    ToggleKnob.Position = UDim2.new(0, 3, 0.5, -9)
+    ToggleKnob.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
+    ToggleKnob.BorderSizePixel = 0
+    ToggleKnob.ZIndex = 10
+    ToggleKnob.Parent = ToggleTrack
+    local KnobCorner = Instance.new("UICorner")
+    KnobCorner.CornerRadius = UDim.new(1, 0)
+    KnobCorner.Parent = ToggleKnob
+    local HitBox = Instance.new("TextButton")
+    HitBox.Size = UDim2.fromScale(1, 1)
+    HitBox.BackgroundTransparency = 1
+    HitBox.Text = ""
+    HitBox.ZIndex = 11
+    HitBox.Parent = BtnFrame
+    HitBox.MouseButton1Click:Connect(function()
+        toggleStates[index] = not toggleStates[index]
+        item.Action()
+    end)
+end
+
+for i, item in ipairs(CONFIG.ITEMS) do
+    createMenuButton(item, i)
+end
+
+local isOpen = false
+local isTweening = false
+
+local function openMenu()
+    if isTweening then return end
+    isTweening = true
+    isOpen = true
+    MenuFrame.Visible = true
+    MenuFrame.Size = UDim2.new(0, CONFIG.MENU_WIDTH, 0, 0)
+    TweenService:Create(Overlay, TweenInfo.new(0.3), {BackgroundTransparency = 0.6}):Play()
+    TweenService:Create(MenuFrame, TweenInfo.new(CONFIG.ANIM_SPEED, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, CONFIG.MENU_WIDTH, 0, CONFIG.MENU_HEIGHT)
+    }):Play()
+    task.delay(CONFIG.ANIM_SPEED * 0.5, function() isTweening = false end)
+end
+
+local function closeMenu()
+    if isTweening then return end
+    isTweening = true
+    isOpen = false
+    TweenService:Create(Overlay, TweenInfo.new(0.25), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(MenuFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Size = UDim2.new(0, CONFIG.MENU_WIDTH, 0, 0)
+    }):Play()
+    task.delay(0.32, function()
+        MenuFrame.Visible = false
+        isTweening = false
+    end)
+end
+
+CloseBtn.MouseButton1Click:Connect(function() closeMenu() end)
+
+Overlay.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then closeMenu() end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == CONFIG.TOGGLE_KEY then
+        if isOpen then closeMenu() else openMenu() end
+    end
+end)
+
+print("✅ MonoMenu загружен. Нажми [LeftAlt] для открытия.")`;
+
+  // Render code into pre with simple colour markup
+  function renderCode(raw) {
+    const esc = raw
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+
+    return esc
+      // comments
+      .replace(/(--[^\n]*)/g, '<span class="cmt">$1</span>')
+      // strings
+      .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="str">$1</span>')
+      // keywords
+      .replace(/\b(local|function|end|if|then|else|elseif|return|not|and|or|for|in|do|while|repeat|until|true|false|nil)\b/g, '<span class="kw">$1</span>')
+      // braces
+      .replace(/([{}()\[\]])/g, '<span class="br">$1</span>');
+  }
+
+  let revealed = false;
+
+  function revealScript() {
+    const panel = document.getElementById('codePanel');
+    const btn   = document.getElementById('getBtn');
+    const status = document.getElementById('footerStatus');
+
+    if (revealed) {
+      panel.classList.remove('visible');
+      btn.querySelector('.get-btn-inner').innerHTML = '<span class="btn-icon">⬡</span> GET SCRIPT <span class="btn-icon">⬡</span>';
+      status.textContent = 'STATUS: IDLE';
+      status.classList.remove('active');
+      revealed = false;
+      return;
+    }
+
+    revealed = true;
+    status.textContent = 'STATUS: DECRYPTING...';
+    status.classList.add('active');
+    btn.querySelector('.get-btn-inner').innerHTML = '<span class="btn-icon">⬡</span> HIDE SCRIPT <span class="btn-icon">⬡</span>';
+
+    document.getElementById('codeBlock').innerHTML = renderCode(SCRIPT_CODE);
+
+    setTimeout(() => {
+      panel.classList.add('visible');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      status.textContent = 'STATUS: SCRIPT LOADED';
+    }, 80);
+  }
+
+  function copyScript() {
+    navigator.clipboard.writeText(SCRIPT_CODE).then(() => {
+      const btn  = document.getElementById('copyBtn');
+      const icon = document.getElementById('copyIcon');
+      const txt  = document.getElementById('copyText');
+      btn.classList.add('copied');
+      icon.textContent = '✓';
+      txt.textContent  = 'COPIED';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        icon.textContent = '⎘';
+        txt.textContent  = 'COPY';
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
