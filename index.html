@@ -2,8 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jetway License Activation</title>
+    <title>Jetway Key Generator</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -18,69 +17,74 @@
         .container {
             background: #111118;
             border: 2px solid #00ffcc;
-            border-radius: 12px;
             padding: 40px;
             width: 420px;
             text-align: center;
+            border-radius: 12px;
         }
         input {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: #1a1a22;
             border: 1px solid #00ffcc44;
             border-radius: 6px;
             color: #00ffcc;
             font-size: 16px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         button {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: #00ffcc;
             color: #0a0a0f;
             border: none;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
         }
         .status { margin-top: 15px; font-size: 14px; }
-        .success { color: #00ff88; }
-        .error { color: #ff6666; }
+        .key-box {
+            background: #1a1a22;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            border: 1px solid #00ffcc44;
+            color: #00ffcc;
+        }
         .footer { margin-top: 20px; font-size: 12px; color: #334455; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>✈️ JETWAY LICENSE</h2>
-    <p style="color:#668877;margin-bottom:20px;">Введи ключ для активации системы</p>
-    <input type="text" id="keyInput" placeholder="ВВЕДИ КЛЮЧ">
-    <button onclick="activate()">АКТИВИРОВАТЬ</button>
-    <div id="status" class="status">Ожидание...</div>
+    <h2>🔑 Jetway Key Generator</h2>
+    <p style="color:#668877;margin-bottom:15px;">Введи свой ID или имя</p>
+    <input type="text" id="userInput" placeholder="Твой ID или ник">
+    <button onclick="generateKey()">СГЕНЕРИРОВАТЬ КЛЮЧ</button>
+    <div id="status" class="status">Введи данные...</div>
+    <div id="keyDisplay" class="key-box" style="display:none;"></div>
     <div class="footer">https://t.me/qpBypass</div>
 </div>
 <script>
-    const validKeys = ["JetwayOhnoway", "DEMO-2026", "QP-BYPASS"];
-
-    function activate() {
-        const input = document.getElementById('keyInput').value.trim();
+    function generateKey() {
+        const input = document.getElementById('userInput').value.trim();
         const status = document.getElementById('status');
+        const keyDisplay = document.getElementById('keyDisplay');
 
         if (!input) {
-            status.textContent = "❌ Введи ключ!";
-            status.className = "status error";
+            status.textContent = "❌ Введи что-нибудь!";
+            status.style.color = "#ff6666";
             return;
         }
 
-        if (validKeys.includes(input)) {
-            status.textContent = "✅ АКТИВАЦИЯ УСПЕШНА! ТОКЕН: JETWAY-ACTIVE";
-            status.className = "status success";
-            localStorage.setItem('jetway_token', 'JETWAY-ACTIVE');
-        } else {
-            status.textContent = "❌ НЕВЕРНЫЙ КЛЮЧ";
-            status.className = "status error";
-        }
+        const key = "JETWAY-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+        keyDisplay.style.display = "block";
+        keyDisplay.textContent = key;
+        status.textContent = "✅ Ключ сгенерирован. Скопируй его в скрипт.";
+        status.style.color = "#00ff88";
     }
 </script>
 </body>
