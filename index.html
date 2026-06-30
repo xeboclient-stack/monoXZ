@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jetway Activation System</title>
+    <title>Jetway License Activation</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -22,19 +22,6 @@
             padding: 40px;
             width: 420px;
             text-align: center;
-            box-shadow: 0 0 50px #00ffcc22;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #00ffcc;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-        .sub {
-            color: #668877;
-            font-size: 14px;
-            margin-bottom: 25px;
         }
         input {
             width: 100%;
@@ -45,11 +32,7 @@
             color: #00ffcc;
             font-size: 16px;
             text-align: center;
-            outline: none;
             margin-bottom: 15px;
-        }
-        input:focus {
-            border-color: #00ffcc;
         }
         button {
             width: 100%;
@@ -61,71 +44,44 @@
             font-weight: bold;
             font-size: 18px;
             cursor: pointer;
-            transition: 0.3s;
-            letter-spacing: 1px;
         }
-        button:hover {
-            background: #00ddbb;
-        }
-        .status {
-            margin-top: 18px;
-            font-size: 14px;
-            min-height: 30px;
-            color: #ff6666;
-        }
-        .status.success { color: #00ff88; }
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #334455;
-        }
+        .status { margin-top: 15px; font-size: 14px; }
+        .success { color: #00ff88; }
+        .error { color: #ff6666; }
+        .footer { margin-top: 20px; font-size: 12px; color: #334455; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div class="logo">✈️ JETWAY SYSTEM</div>
-    <div class="sub">Активация через ключ доступа</div>
-
-    <input type="text" id="keyInput" placeholder="ВВЕДИ КЛЮЧ ДОСТУПА" autofocus>
+    <h2>✈️ JETWAY LICENSE</h2>
+    <p style="color:#668877;margin-bottom:20px;">Введи ключ для активации системы</p>
+    <input type="text" id="keyInput" placeholder="ВВЕДИ КЛЮЧ">
     <button onclick="activate()">АКТИВИРОВАТЬ</button>
-
-    <div id="status" class="status">Ожидание ввода...</div>
+    <div id="status" class="status">Ожидание...</div>
     <div class="footer">https://t.me/qpBypass</div>
 </div>
-
 <script>
-    const SECRET_KEY = "JetwayOhnoway";
+    const validKeys = ["JetwayOhnoway", "DEMO-2026", "QP-BYPASS"];
 
     function activate() {
         const input = document.getElementById('keyInput').value.trim();
         const status = document.getElementById('status');
 
         if (!input) {
-            status.textContent = "❌ Введи ключ, блять.";
-            status.className = "status";
+            status.textContent = "❌ Введи ключ!";
+            status.className = "status error";
             return;
         }
 
-        if (input === SECRET_KEY) {
-            status.textContent = "✅ АКТИВАЦИЯ УСПЕШНА! Токен: JETWAY-ACTIVE-2026";
+        if (validKeys.includes(input)) {
+            status.textContent = "✅ АКТИВАЦИЯ УСПЕШНА! ТОКЕН: JETWAY-ACTIVE";
             status.className = "status success";
-            localStorage.setItem('jetway_token', 'JETWAY-ACTIVE-2026');
+            localStorage.setItem('jetway_token', 'JETWAY-ACTIVE');
         } else {
-            status.textContent = "❌ НЕВЕРНЫЙ КЛЮЧ. Попробуй ещё.";
-            status.className = "status";
-        }
-    }
-
-    // Проверяем, активирован ли уже
-    window.onload = function() {
-        const token = localStorage.getItem('jetway_token');
-        if (token === 'JETWAY-ACTIVE-2026') {
-            document.getElementById('status').textContent = "✅ СИСТЕМА УЖЕ АКТИВИРОВАНА";
-            document.getElementById('status').className = "status success";
+            status.textContent = "❌ НЕВЕРНЫЙ КЛЮЧ";
+            status.className = "status error";
         }
     }
 </script>
-
 </body>
 </html>
